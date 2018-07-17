@@ -10,3 +10,6 @@ maven { url 'https://jitpack.io' }
 
 app gradle
 compile 'com.github.CaoXiLin:voiceDemo:1.0'
+
+#更新说明
+上传demo

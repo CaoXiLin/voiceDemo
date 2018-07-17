@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">voiceDemo</string>
+    <string name="number">请输入网关序列号</string>
+</resources>
