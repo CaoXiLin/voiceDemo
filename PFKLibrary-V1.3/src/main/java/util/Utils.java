@@ -4,6 +4,10 @@ import android.content.Context;
 import android.os.Environment;
 import android.util.Log;
 
+import com.accloud.cloudservice.AC;
+import com.accloud.cloudservice.PayloadCallback;
+import com.accloud.service.ACException;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -18,6 +22,8 @@ import java.util.List;
 
 import bean.DeviceTableEntity;
 import demo.cxl.com.mylibrary.SocketInfo;
+
+import static util.Const.SDPATH;
 
 /**
  * Created by cxl onGatewayDataBack 2018/5/9.
@@ -67,45 +73,45 @@ public class Utils {
     /**
      * 局域网下载文件
      * ***/
-    public  static void DownLoadLAN(final String readGETWAYIPaddress, final Context context, final StateCallBack stateCallBack) {
-        new Thread(new Runnable() {
-
-            @Override
-            public void run() {
-                // TODO Auto-generated method stub
-
-                DownLoadUtility downLoadUtility = new DownLoadUtility();
-
-                try {
-                    //创建文件夹
-                    createSDDir("");
-                    //下载文件到文件夹
-                    //"http://" + readGETWAYIPaddress + "/conf/deviceconfig.json"
-                    downLoadUtility.downLoadFromUrl("http://"+readGETWAYIPaddress+"/conf/"+ Const.PackageFile, Const.PackageFile, Const.SDPATH);
-                    //解压文件
-                    TarUtility.dearchive(Const.SDPATH+"/"+Const.PackageFile);
-
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                } catch (Exception e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-
-
-                Log.i("cxl",Thread.currentThread().getName()+"   DownLoadLAN     Name");
-                //保存文件
-                String deviceString = readContent(Const.SDPATH+"pfk/"+Const.DEVICE);
-                //保存设备文件到数据库
-                loadDevicefile(readGETWAYIPaddress,context,deviceString,stateCallBack);
-            }
-        }).start();
-    }
+//    public  static void DownLoadLAN(final String readGETWAYIPaddress, final Context context, final StateCallBack stateCallBack) {
+//        new Thread(new Runnable() {
+//
+//            @Override
+//            public void run() {
+//                // TODO Auto-generated method stub
+//
+//                DownLoadUtility downLoadUtility = new DownLoadUtility();
+//
+//                try {
+//                    //创建文件夹
+//                    createSDDir("");
+//                    //下载文件到文件夹
+//                    //"http://" + readGETWAYIPaddress + "/conf/deviceconfig.json"
+//                    downLoadUtility.downLoadFromUrl("http://"+readGETWAYIPaddress+"/conf/"+ Const.PackageFile, Const.PackageFile, SDPATH);
+//                    //解压文件
+//                    TarUtility.dearchive(SDPATH+"/"+Const.PackageFile);
+//
+//                } catch (IOException e) {
+//                    // TODO Auto-generated catch block
+//                    e.printStackTrace();
+//                } catch (Exception e) {
+//                    // TODO Auto-generated catch block
+//                    e.printStackTrace();
+//                }
+//
+//
+//                Log.i("cxl",Thread.currentThread().getName()+"   DownLoadLAN     Name");
+//                //保存文件
+//                String deviceString = readContent(SDPATH+"pfk/"+Const.DEVICE);
+//                //保存设备文件到数据库
+//                loadDevicefile(readGETWAYIPaddress,context,deviceString,stateCallBack);
+//            }
+//        }).start();
+//    }
 
     public static File createSDDir(String dirName) throws IOException
     {
-        File dir = new File(Const.SDPATH + dirName);
+        File dir = new File(SDPATH + dirName);
         if (Environment.getExternalStorageState().equals(
                 Environment.MEDIA_MOUNTED))
         {
@@ -182,7 +188,56 @@ public class Utils {
         }
 
     }
+    // 广域网下载 2
+    public static void WanDownLoad(final String ip, final Context context, final StateCallBack stateCallBack) {
 
+        //		Log.i("INFO", "序列号:" + ip);
+        com.accloud.service.ACFileInfo fileInfo = new com.accloud.service.ACFileInfo(ip, Const.PackageFile);
+        // 上传文件时若ACFileInfo中isPublic为true，则expireTime参数无效；默认情况为false，如下24*60*60代表url链接有效时间，即1天
+        AC.fileMgr().getDownloadUrl(fileInfo,  24*60*60, new PayloadCallback<String>() {
+
+            @Override
+            public void success(final String url) {
+                // TODO Auto-generated method stub
+
+                Log.i("cao", "url:"+url);
+
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        // TODO Auto-generated method stub
+                        DownLoadUtility downLoadUtility = new DownLoadUtility();
+                        //						Log.i("INFO", "广域网下下载：" + downLoadUtility.downLoad(url));
+
+                        try {
+                            //创建文件夹
+                            Utils.createSDDir("");
+                            //下载文件到文件夹
+                            downLoadUtility.downLoadFromUrl(url, Const.PackageFile, SDPATH);
+                            //解压文件
+                            TarUtility.dearchive(SDPATH+"/"+Const.PackageFile);
+
+                        } catch (IOException e1) {
+                            e1.printStackTrace();
+                        } catch (Exception e1) {
+                            e1.printStackTrace();
+                        }
+
+                        Log.i("cxl",Thread.currentThread().getName()+"   DownLoadLAN     Name");
+                        //保存文件
+                        String deviceString = readContent(SDPATH+"pfk/"+Const.DEVICE);
+                        //保存设备文件到数据库
+                        loadDevicefile(ip,context,deviceString,stateCallBack);
+                    }
+                }).start();
+            }
+
+            @Override
+            public void error(ACException e) {
+                Log.i("cao", "error------" + e.toString());
+            }
+        });
+    }
 
 
 

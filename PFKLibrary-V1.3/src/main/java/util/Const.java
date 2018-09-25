@@ -14,6 +14,9 @@ public interface Const {
     String dataIsnull = "DeviceTableEntity is  null";
     String SUCCESS = "1";
     String ERROR = "-1";
+    String key_ERROR = "No gateway found";
+    String key_gateway_0 = " gateway  is 0";
+    String key_error_ablcloud="ablcloud_error";
     String HEAD = "\\$GPPFK";//协议头部
     int PORTNUM = 1238;//网关端口号
     String SDPATH = Environment.getExternalStorageDirectory()

@@ -1,11 +1,16 @@
 package demo.cxl.com.mylibrary;
 
+import com.accloud.cloudservice.AC;
+import com.accloud.cloudservice.PayloadCallback;
+import com.accloud.service.ACDeviceMsg;
+import com.accloud.service.ACException;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import util.Const;
+import receiver.MyReceiver;
 import util.ControlCallBack;
-import util.Utils;
+import util.YohoPoolExecutor;
 
 /**
  * Created by cxl onGatewayDataBack 2018/5/9.
@@ -37,22 +42,56 @@ public class PFKControlCallBack {
      * @param controlCallBack
      * @return
      */
-    public String Control(String value ,String dev_type,String dev_id,JSONObject dev_attr ,ControlCallBack controlCallBack){
+    public String Control(final String number , String value , String dev_type, String dev_id, JSONObject dev_attr , final ControlCallBack controlCallBack){
         JSONObject jsonobject = new JSONObject();
         JSONObject jsonobject2 = new JSONObject();
+        JSONObject jsonobject3 = new JSONObject();
 
         try {
             jsonobject2.put("power", value);
             jsonobject.put("dev_id", dev_id);
             jsonobject.put("dev_type", dev_type);
             jsonobject.put("dev_attr", jsonobject2);
-          if(socketInfo!=null){
+            jsonobject3.put("switch", jsonobject.toString());
+//          if(socketInfo!=null){
+//
+//              Utils.control(socketInfo,jsonobject.toString(),controlCallBack);
+//          }else {
+//              controlCallBack.onError(Const.socketIsNull);
+//          }
 
-              Utils.control(socketInfo,jsonobject.toString(),controlCallBack);
-          }else {
-              controlCallBack.onError(Const.socketIsNull);
-          }
+            final ACDeviceMsg deviceMsg = new ACDeviceMsg(68, jsonobject3.toString().getBytes(),"open light");
+            YohoPoolExecutor.getInstance().getExecutor().execute(new Runnable() {
+                @Override
+                public void run() {
 
+                    AC.bindMgr().sendToDeviceWithOption("840",number, deviceMsg, AC.LOCAL_FIRST, new PayloadCallback<ACDeviceMsg>() {
+
+                                @Override
+                                public void success(ACDeviceMsg deviceMsg) {
+
+                                }
+
+                                @Override
+                                public void error(ACException e) {
+
+                                }
+                            });
+                    try {
+                        MyReceiver.isSuccessAndError =true;
+                        Thread.sleep(5000);
+
+                        if(MyReceiver.isSuccessAndError){
+                            if(controlCallBack!=null){
+                                controlCallBack.onError("404");
+                            }
+                        }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
+                }
+            });
         } catch (JSONException e) {
             e.printStackTrace();
         }

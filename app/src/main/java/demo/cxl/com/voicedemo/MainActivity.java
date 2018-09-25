@@ -1,5 +1,8 @@
 package demo.cxl.com.voicedemo;
 
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -18,6 +21,8 @@ import demo.cxl.com.mylibrary.PFKAllControlCallBack;
 import demo.cxl.com.mylibrary.PFKControlCallBack;
 import demo.cxl.com.mylibrary.PFKMain;
 import demo.cxl.com.mylibrary.SocketInfo;
+import receiver.MyReceiver;
+import service.SubscribeService;
 import util.ControlCallBack;
 import util.StateCallBack;
 
@@ -31,12 +36,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private PFKControlCallBack mPfkControlCallBack;
     private EditText mEt_number;
     private String KEY_BackGroundMusic = "playcontrol";
-
+    private Context mContext;
+    private MyReceiver mReceiver=null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mContext =this;
         init();
 
     }
@@ -73,15 +80,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             super.handleMessage(msg);
             switch (msg.what){
                 case 1000:
-                    is = true;
-                    mEnd = System.currentTimeMillis();
-                    Log.i(TAG, "handler ----------------------------------------------- ");
-                    mPfkControlCallBack=null;
-                    socketinfo = null;
-                    socketinfo = new SocketInfo(MainActivity.this,mIp);
+//                    is = true;
+//                    mEnd = System.currentTimeMillis();
+//                    Log.i(TAG, "handler ----------------------------------------------- ");
+//                    mPfkControlCallBack=null;
+//                    socketinfo = null;
+//                    socketinfo = new SocketInfo(MainActivity.this,mIp);
+//
+//                    mPfkControlCallBack = new PFKControlCallBack(socketinfo,MainActivity.this);
+////                    isSuccessAndFailure();
+                    break;
+                case 1001:
+                    Toast.makeText(mContext,"失败-->",Toast.LENGTH_LONG).show();
+                    break;
+                case 1002:
+                    Toast.makeText(mContext,mDeviceTableEntities.toString(),Toast.LENGTH_LONG).show();
+                    Intent intent = new Intent();
+                    intent.setClass(mContext, SubscribeService.class);
+                    startService(intent);
 
-                    mPfkControlCallBack = new PFKControlCallBack(socketinfo,MainActivity.this);
-                    isSuccessAndFailure();
                     break;
             }
         }
@@ -94,6 +111,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.bt_ok:
                 connection();
 
+                if(mReceiver ==null){
+
+                    mReceiver = new MyReceiver(this);
+                    IntentFilter filter = new IntentFilter();
+                    filter.addAction("pfk_data");
+                    registerReceiver(mReceiver, filter);
+                }
 
                 break;
             case R.id.bt_on:
@@ -101,9 +125,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 //开的控制指令
                 if(mDeviceTableEntities!=null){
 
-                    mPfkControlCallBack.Control("ON", mDeviceTableEntities.get(1).getDevicetype(),
-                            mDeviceTableEntities.get(1).getDeviceid()
-                            , mDeviceTableEntities.get(1).getDeviceattr(), MainActivity.this);
+                    mPfkControlCallBack.Control(mEt_number.getText().toString(),"ON", mDeviceTableEntities.get(0).getDevicetype(),
+                            mDeviceTableEntities.get(0).getDeviceid()
+                            , mDeviceTableEntities.get(0).getDeviceattr(), MainActivity.this);
                 }else {
                     Toast.makeText(MainActivity.this,"设备列表 null",Toast.LENGTH_LONG).show();
                 }
@@ -111,7 +135,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.bt_close:
                 //关的控制指令
                 if(mDeviceTableEntities!=null){
-                  mPfkControlCallBack.Control("OFF",mDeviceTableEntities.get(1).getDevicetype(),
+                  mPfkControlCallBack.Control(mEt_number.getText().toString(),"OFF",mDeviceTableEntities.get(1).getDevicetype(),
                             mDeviceTableEntities.get(1).getDeviceid()
                             ,mDeviceTableEntities.get(1).getDeviceattr(),MainActivity.this);
                 }else {
@@ -157,30 +181,51 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
          */
         PFKMain.getInstance().findDevice(this, number, new StateCallBack() {
 
+            //成功
+            @Override
+            public void onSuccess(String Success, String ip) {
+                Log.i(TAG, "onSuccess: "+Success);
+//                if(ip!=null){
+//
+//                    mIp = ip;
+//                    socketinfo = new SocketInfo(MainActivity.this,mIp);
+//                    Log.i("cxl",Thread.currentThread().getName()+"   onSuccess   onSuccess ");
+//                    Log.i(TAG, "onSuccess: "+"成功"+Success);
+//                    Toast.makeText(mContext,Success+"ip--->>"+ip,Toast.LENGTH_LONG).show();
+//
+//
+//
+//                    mPfkControlCallBack = new PFKControlCallBack(socketinfo,MainActivity.this);
+//                    isSuccessAndFailure();
+//                }else {
+//
+//
+//                }
+            }
+
             @Override
             public void callbackData(List<DeviceTableEntity> data) {
                 Log.i("cxl",data.size()+   "数据");
                 mDeviceTableEntities = data;
-            }
+                mHandler.sendEmptyMessage(1002);
 
-            //成功
-            @Override
-            public void onSuccess(String Success, String ip) {
-                mIp = ip;
-                socketinfo = new SocketInfo(MainActivity.this,mIp);
-                Log.i("cxl",Thread.currentThread().getName()+"   onSuccess   onSuccess ");
-                Log.i(TAG, "onSuccess: "+"成功"+Success);
+                if(mPfkControlCallBack==null){
 
+                    mPfkControlCallBack = new PFKControlCallBack(socketinfo,MainActivity.this);
+                }
 
-
-                mPfkControlCallBack = new PFKControlCallBack(socketinfo,MainActivity.this);
-                isSuccessAndFailure();
             }
 
             @Override
             public void failure(String error) {
-                Toast.makeText(MainActivity.this,error,Toast.LENGTH_LONG).show();
+//                Toast.makeText(MainActivity.this,error,Toast.LENGTH_LONG).show();
                 Log.i(TAG, "failure: "+error);
+                if(error.equals("1992")){
+                    Intent intent = new Intent();
+                    intent.setClass(mContext,LoginActivity.class);
+                    startActivity(intent);
+                }
+                mHandler.sendEmptyMessage(1001);
             }
         });
     }
@@ -196,40 +241,40 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
 //            mHandler.sendEmptyMessageDelayed(1000,5000);
-            is =false;
-            mPfkControlCallBack=null;
-            socketinfo = null;
-            socketinfo = new SocketInfo(MainActivity.this,mIp);
-
-            mPfkControlCallBack = new PFKControlCallBack(socketinfo,MainActivity.this);
-            isSuccessAndFailure();
+//            is =false;
+//            mPfkControlCallBack=null;
+//            socketinfo = null;
+//            socketinfo = new SocketInfo(MainActivity.this,mIp);
+//
+//            mPfkControlCallBack = new PFKControlCallBack(socketinfo,MainActivity.this);
+//            isSuccessAndFailure();
 
         Log.i(TAG, "onError: "+error);
         Log.i(TAG, "线程名字"+Thread.currentThread().getName());
 
     }
 
-    private void isSuccessAndFailure() {
-        if(socketinfo !=null){
-
-            socketinfo.setOnSocektConnectionCallBack(new SocketInfo.OnSocektConnectionCallBack() {
-                @Override
-                public void onItemClickListener(String erro) {
-//                    socketInfo = new SocketInfo(MainActivity.this,mIp);
-                    // 等待 1分钟在重新连接
-
-                    Log.i(TAG, "MainActivity>>>>>    失败 "+Thread.currentThread().getName()+"》》》》》"+erro);
-                }
-
-                @Override
-                public void onGatewayDataBack(String msg) {
-                    Log.i(TAG, "onGatewayDataBack: "+msg);
-                    is = true;
-                }
-
-            });
-        }
-    }
+//    private void isSuccessAndFailure() {
+//        if(socketinfo !=null){
+//
+//            socketinfo.setOnSocektConnectionCallBack(new SocketInfo.OnSocektConnectionCallBack() {
+//                @Override
+//                public void onItemClickListener(String erro) {
+////                    socketInfo = new SocketInfo(MainActivity.this,mIp);
+//                    // 等待 1分钟在重新连接
+//
+//                    Log.i(TAG, "MainActivity>>>>>    失败 "+Thread.currentThread().getName()+"》》》》》"+erro);
+//                }
+//
+//                @Override
+//                public void onGatewayDataBack(String msg) {
+//                    Log.i(TAG, "onGatewayDataBack: "+msg);
+//                    is = true;
+//                }
+//
+//            });
+//        }
+//    }
 
     @Override
     protected void onDestroy() {
