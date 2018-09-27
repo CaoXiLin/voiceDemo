@@ -1,6 +1,5 @@
 package util;
 
-import android.content.Context;
 import android.os.Environment;
 import android.util.Log;
 
@@ -144,7 +143,7 @@ public class Utils {
     }
 
     //设备文件
-    public static void loadDevicefile(String ip, Context activity, String deviceString, StateCallBack stateCallBack) {
+    public static void loadDevicefile( String deviceString, StateCallBack stateCallBack) {
         JSONObject jsonObject = null;
         List<DeviceTableEntity> deviceList =null;
         JSONObject attr = new JSONObject();
@@ -188,48 +187,43 @@ public class Utils {
         }
 
     }
-    // 广域网下载 2
-    public static void WanDownLoad(final String ip, final Context context, final StateCallBack stateCallBack) {
-
-        //		Log.i("INFO", "序列号:" + ip);
+    private static  Runnable mRunnable =null;
+    public static void WanDownLoad(final String ip, final StateCallBack stateCallBack) {
         com.accloud.service.ACFileInfo fileInfo = new com.accloud.service.ACFileInfo(ip, Const.PackageFile);
-        // 上传文件时若ACFileInfo中isPublic为true，则expireTime参数无效；默认情况为false，如下24*60*60代表url链接有效时间，即1天
         AC.fileMgr().getDownloadUrl(fileInfo,  24*60*60, new PayloadCallback<String>() {
 
             @Override
             public void success(final String url) {
                 // TODO Auto-generated method stub
+                if(mRunnable ==null){
+                    mRunnable = new Runnable() {
+                        @Override
+                        public void run() {
 
-                Log.i("cao", "url:"+url);
+                            DownLoadUtility downLoadUtility = new DownLoadUtility();
+                            try {
+                                //创建文件夹
+                                Utils.createSDDir("");
+                                //下载文件到文件夹
+                                downLoadUtility.downLoadFromUrl(url, Const.PackageFile, SDPATH);
+                                //解压文件
+                                TarUtility.dearchive(SDPATH+"/"+Const.PackageFile);
 
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        // TODO Auto-generated method stub
-                        DownLoadUtility downLoadUtility = new DownLoadUtility();
-                        //						Log.i("INFO", "广域网下下载：" + downLoadUtility.downLoad(url));
+                            } catch (IOException e1) {
+                                e1.printStackTrace();
+                            } catch (Exception e1) {
+                                e1.printStackTrace();
+                            }
 
-                        try {
-                            //创建文件夹
-                            Utils.createSDDir("");
-                            //下载文件到文件夹
-                            downLoadUtility.downLoadFromUrl(url, Const.PackageFile, SDPATH);
-                            //解压文件
-                            TarUtility.dearchive(SDPATH+"/"+Const.PackageFile);
-
-                        } catch (IOException e1) {
-                            e1.printStackTrace();
-                        } catch (Exception e1) {
-                            e1.printStackTrace();
+                            Log.i("cxl",Thread.currentThread().getName()+"   DownLoadLAN     Name");
+                            //保存文件
+                            String deviceString = readContent(SDPATH+"pfk/"+Const.DEVICE);
+                            //保存设备文件到数据库
+                            loadDevicefile(deviceString,stateCallBack);
                         }
-
-                        Log.i("cxl",Thread.currentThread().getName()+"   DownLoadLAN     Name");
-                        //保存文件
-                        String deviceString = readContent(SDPATH+"pfk/"+Const.DEVICE);
-                        //保存设备文件到数据库
-                        loadDevicefile(ip,context,deviceString,stateCallBack);
-                    }
-                }).start();
+                    };
+                }
+                YohoPoolExecutor.getInstance().getExecutor().execute(mRunnable);
             }
 
             @Override
@@ -238,7 +232,6 @@ public class Utils {
             }
         });
     }
-
 
 
 }

@@ -80,15 +80,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             super.handleMessage(msg);
             switch (msg.what){
                 case 1000:
-//                    is = true;
-//                    mEnd = System.currentTimeMillis();
-//                    Log.i(TAG, "handler ----------------------------------------------- ");
-//                    mPfkControlCallBack=null;
-//                    socketinfo = null;
-//                    socketinfo = new SocketInfo(MainActivity.this,mIp);
-//
-//                    mPfkControlCallBack = new PFKControlCallBack(socketinfo,MainActivity.this);
-////                    isSuccessAndFailure();
+
                     break;
                 case 1001:
                     Toast.makeText(mContext,"失败-->",Toast.LENGTH_LONG).show();
@@ -104,7 +96,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     };
 
-
+private boolean connecting =false;
     @Override
     public void onClick(View v) {
         switch (v.getId()){
@@ -123,24 +115,47 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.bt_on:
 
                 //开的控制指令
-                if(mDeviceTableEntities!=null){
+                connecting = true;
+                new Thread(new Runnable() {
 
-                    mPfkControlCallBack.Control(mEt_number.getText().toString(),"ON", mDeviceTableEntities.get(0).getDevicetype(),
-                            mDeviceTableEntities.get(0).getDeviceid()
-                            , mDeviceTableEntities.get(0).getDeviceattr(), MainActivity.this);
-                }else {
-                    Toast.makeText(MainActivity.this,"设备列表 null",Toast.LENGTH_LONG).show();
-                }
+                    @Override
+                    public void run() {
+                        while (connecting) {
+                            try {
+                                Thread.sleep(2000);
+                                    sendOpen();
+                                Log.i("cc", "open: "+"----------------------"+Thread.currentThread().getName());
+
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                }).start();
+
+                sendOpen();
+
+
                 break;
             case R.id.bt_close:
                 //关的控制指令
-                if(mDeviceTableEntities!=null){
-                  mPfkControlCallBack.Control(mEt_number.getText().toString(),"OFF",mDeviceTableEntities.get(1).getDevicetype(),
-                            mDeviceTableEntities.get(1).getDeviceid()
-                            ,mDeviceTableEntities.get(1).getDeviceattr(),MainActivity.this);
-                }else {
-                    Toast.makeText(MainActivity.this,"设备列表 null    ",Toast.LENGTH_LONG).show();
-                }
+                connecting = true;
+                new Thread(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        while (connecting) {
+                            try {
+                                Thread.sleep(2000);
+                                sendClose();
+                                Log.i("cc", "close: "+"----------------------"+Thread.currentThread().getName());
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                }).start();
+                sendClose();
                 break;
             case R.id.bt_all:
 
@@ -148,7 +163,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 for (int i = 0;i<mDeviceTableEntities.size();i++){
                     if(mDeviceTableEntities.get(i).getDevicetype().equals("BackGroundMusic")){
-                        PFKAllControlCallBack.getInstance().allControl(KEY_BackGroundMusic,"pre",mDeviceTableEntities.get(i).getDevicetype()
+                        PFKAllControlCallBack.getInstance().allControl(mEt_number.getText().toString(),KEY_BackGroundMusic,"pre",mDeviceTableEntities.get(i).getDevicetype()
                         ,mDeviceTableEntities.get(i).getDeviceid(), socketinfo,MainActivity.this);
                     }
                 }
@@ -158,13 +173,33 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 /*****************APP控制设备其他指令举例 类型为BackGroundMusic    比如执行下一曲    **************************/
                 for (int i = 0;i<mDeviceTableEntities.size();i++){
                     if(mDeviceTableEntities.get(i).getDevicetype().equals("BackGroundMusic")){
-                        PFKAllControlCallBack.getInstance().allControl(KEY_BackGroundMusic,"next",mDeviceTableEntities.get(i).getDevicetype()
+                        PFKAllControlCallBack.getInstance().allControl(mEt_number.getText().toString(),KEY_BackGroundMusic,"next",mDeviceTableEntities.get(i).getDevicetype()
                                 ,mDeviceTableEntities.get(i).getDeviceid(), socketinfo,MainActivity.this);
                     }
                 }
+
+                connecting=false;
                 break;
         }
 
+    }
+
+    private void sendClose() {
+        for (int i = 0;i<mDeviceTableEntities.size();i++){
+            if(mDeviceTableEntities.get(i).getDevicetype().equals("CommonLight")){
+                PFKAllControlCallBack.getInstance().allControl(mEt_number.getText().toString(),"power","OFF",mDeviceTableEntities.get(i).getDevicetype()
+                        ,mDeviceTableEntities.get(i).getDeviceid(), socketinfo,MainActivity.this);
+            }
+        }
+    }
+
+    private void sendOpen() {
+        for (int i = 0;i<mDeviceTableEntities.size();i++){
+            if(mDeviceTableEntities.get(i).getDevicetype().equals("CommonLight")){
+                PFKAllControlCallBack.getInstance().allControl(mEt_number.getText().toString(),"power","ON",mDeviceTableEntities.get(i).getDevicetype()
+                        ,mDeviceTableEntities.get(i).getDeviceid(), socketinfo,MainActivity.this);
+            }
+        }
     }
 
     private void connection() {
@@ -179,28 +214,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         /**
          * 去连接网关
          */
-        PFKMain.getInstance().findDevice(this, number, new StateCallBack() {
+        PFKMain.getInstance().findDevice(this, number,"17538718726","1234", new StateCallBack() {
 
             //成功
             @Override
             public void onSuccess(String Success, String ip) {
                 Log.i(TAG, "onSuccess: "+Success);
-//                if(ip!=null){
-//
-//                    mIp = ip;
-//                    socketinfo = new SocketInfo(MainActivity.this,mIp);
-//                    Log.i("cxl",Thread.currentThread().getName()+"   onSuccess   onSuccess ");
-//                    Log.i(TAG, "onSuccess: "+"成功"+Success);
-//                    Toast.makeText(mContext,Success+"ip--->>"+ip,Toast.LENGTH_LONG).show();
-//
-//
-//
-//                    mPfkControlCallBack = new PFKControlCallBack(socketinfo,MainActivity.this);
-//                    isSuccessAndFailure();
-//                }else {
-//
-//
-//                }
+
             }
 
             @Override
@@ -209,22 +229,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 mDeviceTableEntities = data;
                 mHandler.sendEmptyMessage(1002);
 
-                if(mPfkControlCallBack==null){
-
-                    mPfkControlCallBack = new PFKControlCallBack(socketinfo,MainActivity.this);
-                }
-
             }
 
             @Override
             public void failure(String error) {
 //                Toast.makeText(MainActivity.this,error,Toast.LENGTH_LONG).show();
                 Log.i(TAG, "failure: "+error);
-                if(error.equals("1992")){
-                    Intent intent = new Intent();
-                    intent.setClass(mContext,LoginActivity.class);
-                    startActivity(intent);
-                }
                 mHandler.sendEmptyMessage(1001);
             }
         });
@@ -238,43 +248,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onError(String error) {
-
-
-//            mHandler.sendEmptyMessageDelayed(1000,5000);
-//            is =false;
-//            mPfkControlCallBack=null;
-//            socketinfo = null;
-//            socketinfo = new SocketInfo(MainActivity.this,mIp);
-//
-//            mPfkControlCallBack = new PFKControlCallBack(socketinfo,MainActivity.this);
-//            isSuccessAndFailure();
-
         Log.i(TAG, "onError: "+error);
         Log.i(TAG, "线程名字"+Thread.currentThread().getName());
-
     }
 
-//    private void isSuccessAndFailure() {
-//        if(socketinfo !=null){
-//
-//            socketinfo.setOnSocektConnectionCallBack(new SocketInfo.OnSocektConnectionCallBack() {
-//                @Override
-//                public void onItemClickListener(String erro) {
-////                    socketInfo = new SocketInfo(MainActivity.this,mIp);
-//                    // 等待 1分钟在重新连接
-//
-//                    Log.i(TAG, "MainActivity>>>>>    失败 "+Thread.currentThread().getName()+"》》》》》"+erro);
-//                }
-//
-//                @Override
-//                public void onGatewayDataBack(String msg) {
-//                    Log.i(TAG, "onGatewayDataBack: "+msg);
-//                    is = true;
-//                }
-//
-//            });
-//        }
-//    }
+
 
     @Override
     protected void onDestroy() {

@@ -8,7 +8,6 @@ import com.accloud.service.ACException;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import receiver.MyReceiver;
 import util.ControlCallBack;
 import util.YohoPoolExecutor;
 
@@ -74,21 +73,11 @@ public class PFKControlCallBack {
 
                                 @Override
                                 public void error(ACException e) {
-
+                                    if(controlCallBack!=null){
+                                        controlCallBack.onError("404");
+                                    }
                                 }
                             });
-                    try {
-                        MyReceiver.isSuccessAndError =true;
-                        Thread.sleep(5000);
-
-                        if(MyReceiver.isSuccessAndError){
-                            if(controlCallBack!=null){
-                                controlCallBack.onError("404");
-                            }
-                        }
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
 
                 }
             });

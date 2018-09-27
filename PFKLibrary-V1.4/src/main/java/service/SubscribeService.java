@@ -95,7 +95,6 @@ public class SubscribeService extends Service{
     private void received(String obj) {
         try {
             JSONObject jsonObjectGet = new JSONObject(obj);//获取的值
-            Log.i("cao", "received: "+obj);
             if(mIntent!=null){
                 mIntent.putExtra("pfk_data",jsonObjectGet.toString());
             }else {
@@ -104,6 +103,7 @@ public class SubscribeService extends Service{
             }
             mIntent.setAction("pfk_data");
             sendBroadcast(mIntent);
+
              JSONArray pfkFacilityArray = jsonObjectGet.optJSONArray("pfk_facility");//获取到的array;
             if (pfkFacilityArray == null || pfkFacilityArray.length() == 0) {
                 return;

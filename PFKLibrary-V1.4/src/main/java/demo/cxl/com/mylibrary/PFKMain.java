@@ -11,6 +11,7 @@ import com.accloud.service.ACException;
 import com.accloud.service.ACObject;
 import com.accloud.service.ACPushTable;
 import com.accloud.service.ACUserDevice;
+import com.accloud.service.ACUserInfo;
 
 import java.util.List;
 
@@ -27,12 +28,8 @@ public class PFKMain {
      */
     private static PFKMain instance;
 
-    private static final String TAG= "aaaaa";
+    private static final String TAG= "cxl";
     private StateCallBack stateCallBack;
-    private  String number;
-    private  Context context;
-
-
     public static PFKMain getInstance() {
         if (instance == null) {
             instance = new PFKMain();
@@ -46,9 +43,6 @@ public class PFKMain {
             super.handleMessage(msg);
             switch (msg.what){
                 case 1000:
-
-//                    Log.i("cxl",Thread.currentThread().getName()+"   mHandler -------");
-//                    stateCallBack.onSuccess(Const.SUCCESS,msg.obj.toString());
                 break;
                 case 1001:
                     final String number = msg.obj.toString();
@@ -60,7 +54,10 @@ public class PFKMain {
 
                         @Override
                         public void error(ACException e) {
-                            stateCallBack.failure("连接失败");
+                            if(stateCallBack!=null){
+
+                                stateCallBack.failure("连接失败");
+                            }
                         }
                     });
                     break;
@@ -77,98 +74,50 @@ public class PFKMain {
         }
 
 
-        // 实例化ACPushTable对象
         ACPushTable table = new ACPushTable();
-        // 设置订阅的表名
         table.setClassName("device_action_date");
-        // 设置订阅的columns行
-        //		table.setColumes(new String[] { "physicalDeviceId", "content", "time" });
-        // 设置监听主键，此处对应添加数据集时的监控主键(监控主键必须是数据集主键的子集)
         ACObject primaryKey = new ACObject();
-        // 订阅deviceId为1的数据变化
         primaryKey.put("physicalDeviceId", number);
         table.setPrimaryKey(primaryKey);
-
-        //设置监听类型，如以下为只要发生创建、删除、替换、更新数据集的时候即会推送数据
         table.setOpType(ACPushTable.OPTYPE_CREATE | ACPushTable.OPTYPE_DELETE | ACPushTable.OPTYPE_REPLACE | ACPushTable.OPTYPE_UPDATE);
 
         AC.pushMgr().watch(table, new VoidCallback() {
             @Override
             public void success() {
                 if(stateCallBack!=null){
-
                     stateCallBack.onSuccess("订阅连接成功","null");
                 }
             }
-
             @Override
             public void error(ACException e) {
                 if(stateCallBack!=null){
-
                     stateCallBack.failure("订阅连接失败");
                 }
             }
         });
-
-
-
     }
 
-    public void  findDevice(final Context context, final String  number, final StateCallBack stateCallBack){
-        this.context = context;
-        this.number = number;
+    public void  findDevice(final Context context, final String  number,String key, String  vlaue, final StateCallBack stateCallBack){
         this.stateCallBack = stateCallBack;
-//        AC.findLocalDevice(AC.FIND_DEVICE_DEFAULT_TIMEOUT, new PayloadCallback<List<ACDeviceFind>>() {
-//            @Override
-//            public void success(List<ACDeviceFind> acDeviceFinds) {
-//                boolean isnumber = false;
-//                String ip = "";
-//                if (acDeviceFinds != null && acDeviceFinds.size() != 0) {
-//                    for (int i = 0;i<acDeviceFinds.size();i++){
-//                        if(acDeviceFinds.get(i).getPhysicalDeviceId().equals(number)){
-//                             ip = acDeviceFinds.get(i).getIp();
-//                            String physicalDeviceId = acDeviceFinds.get(i).getPhysicalDeviceId();
-//                            Utils.DownLoadLAN(ip,context,stateCallBack);
-//
-//                            isnumber = true;
-//                        }
-//                    }
-//
-//                    if(!isnumber){
-////                        if(stateCallBack!=null){
-////                            stateCallBack.failure(Const.key_ERROR);
-////                        }
-//                        WanlistDevices(context,number,stateCallBack);
-//                    }else {
-//                        Message message = new Message();
-//                        message.what = 1000;
-//                        message.obj = ip;
-//                        mHandler.sendMessage(message);
-//                    }
-//                }else {
-////                    if (stateCallBack != null) {
-////                        stateCallBack.failure(Const.key_gateway_0);
-////                    }
-//                    WanlistDevices(context,number,stateCallBack);
-//                }
-//            }
-//            @Override
-//            public void error(ACException e) {
-////                if (stateCallBack != null) {
-////                    stateCallBack.failure(Const.key_error_ablcloud);
-////                }
-//            }
-//        });
-
-        WanlistDevices(context,number,stateCallBack);
+        AC.accountMgr().login(key, vlaue, new PayloadCallback<ACUserInfo>() {
+            @Override
+            public void success(ACUserInfo acUserInfo) {
+                WanlistDevices(number,stateCallBack);
+            }
+            @Override
+            public void error(ACException e) {
+                if(stateCallBack!=null){
+                    stateCallBack.failure("login failure");
+                }
+            }
+        });
     }
 
-    private void WanlistDevices(final Context context, final String number, final StateCallBack stateCallBack) {
+    private void WanlistDevices(final String number, final StateCallBack stateCallBack) {
 
         AC.bindMgr().listDevices(new PayloadCallback<List<ACUserDevice>>() {
             @Override
             public void success(List<ACUserDevice> list) {
-                String ip ="Wan ip is null";
                 if(list==null ||list.size()==0){
                     if(stateCallBack!=null){
 
@@ -179,7 +128,7 @@ public class PFKMain {
                     for (int i =0;i<list.size();i++){
                         ACUserDevice acUserDevice = list.get(i);
                         if(acUserDevice.getPhysicalDeviceId().equals(number)){
-                            Utils.WanDownLoad(number,context,stateCallBack);
+                            Utils.WanDownLoad(number,stateCallBack);
                             isnumber = true;
                         }
                     }
