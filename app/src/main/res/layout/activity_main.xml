@@ -8,65 +8,92 @@
     android:orientation="vertical"
     tools:context="demo.cxl.com.voicedemo.MainActivity">
 
-    <TextView
-        android:id="@+id/tv"
-        android:gravity="center_vertical"
-        android:text="@string/number"
-        android:layout_width="match_parent"
-        android:layout_height="40dp"/>
-    <View
-        android:background="@color/colorAccent"
-        android:layout_width="match_parent"
-        android:layout_height="0.1dp">
-    </View>
+    <ScrollView android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+        <LinearLayout android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
+                      android:orientation="vertical">
+            <TextView
+                android:id="@+id/tv"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:gravity="center_vertical"
+                android:text="@string/number"/>
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.1dp"
+                android:background="@color/colorAccent">
+            </View>
 
-    <EditText
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/et_number"
-        android:hint="请输入网关序列号"
-        android:text="270f39d4ea9c2b01"
-        />
+            <EditText
+                android:id="@+id/et_number"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="请输入网关序列号"
+                android:text="270f39d4ea9c2b01"
+            />
 
-     <Button
-         android:id="@+id/bt_ok"
-         android:layout_width="wrap_content"
-         android:layout_height="wrap_content"
-         android:text="链接"
-         />
+            <Button
+                android:id="@+id/bt_ok"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="链接"
+            />
 
-    <Button
-        android:id="@+id/bt_close"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="关"
-        />
+            <Button
+                android:id="@+id/bt_close"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="关"
+            />
 
-    <Button
-        android:id="@+id/bt_on"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="开"
-        />
+            <Button
+                android:id="@+id/bt_on"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="开"
+            />
 
-    <Button
-        android:id="@+id/bt_all"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="其他控制指令"
-        />
+            <Button
+                android:id="@+id/bt_all"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="其他控制指令"
+            />
 
-    <Button
-        android:id="@+id/bt_all2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="其他控制指令2"
-        />
+            <Button
+                android:id="@+id/bt_all2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="其他控制指令2"
+            />
 
-    <Button
-        android:id="@+id/bt_time"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="time"
-        />
+            <Button
+                android:id="@+id/bt_scene_opeen"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="场景全开"
+            />
+            <Button
+                android:id="@+id/bt_scene_close"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="场景全关"
+            />
+
+            <Button
+                android:id="@+id/bt_quer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="查询"
+            /><Button
+                android:id="@+id/bt_stop"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="停止"
+            />
+
+        </LinearLayout>
+    </ScrollView>
+
 </LinearLayout>

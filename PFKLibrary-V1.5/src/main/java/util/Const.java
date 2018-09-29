@@ -9,6 +9,8 @@ import android.os.Environment;
 public interface Const {
     String PackageFile = "pfk.tar";//打包文件;
     String DEVICE = "deviceconfig.json";//网关用的设备文件文件
+
+    String SCENEFILE = "scene.json";//场景
     String connectionFails = "404";
     String socketIsNull = "500";
     String dataIsnull = "DeviceTableEntity is  null";
@@ -43,7 +45,8 @@ public interface Const {
    String  Key_IR_PLAYER = "IR_PLAYER";                     //
    String  Key_IR_POWERAMP = "IR_PLAYER";                   //
    String  Key_IR_SETBOX = "IR_PLAYER";                     //
-
+    String KEY_SCENE="scene";
+    String KEY_SCENE_ID="scene_id";
 
 
 

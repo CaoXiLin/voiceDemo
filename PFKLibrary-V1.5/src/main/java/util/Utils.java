@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import bean.DeviceTableEntity;
+import bean.SceneTableEntity;
 import demo.cxl.com.mylibrary.SocketInfo;
 
 import static util.Const.SDPATH;
@@ -146,7 +147,6 @@ public class Utils {
     public static void loadDevicefile( String deviceString, StateCallBack stateCallBack) {
         JSONObject jsonObject = null;
         List<DeviceTableEntity> deviceList =null;
-        JSONObject attr = new JSONObject();
         try {
             deviceList = new ArrayList<>();
             jsonObject = new JSONObject(deviceString);
@@ -177,7 +177,8 @@ public class Utils {
             }
 
             if(stateCallBack!=null){
-                Log.i("cxl",Thread.currentThread().getName()+"   loadDevicefile     Name");
+                String s = deviceList.toString();
+                Log.i("cxl",Thread.currentThread().getName()+"   loadDevicefile     Name------设备数据>>>>"+s);
                 stateCallBack.callbackData(deviceList);
             }
 
@@ -186,6 +187,45 @@ public class Utils {
             e.printStackTrace();
         }
 
+    }
+
+    // 场景文件
+    public static void loadScenefile( String sceneString,StateCallBack stateCallBack) {
+        JSONObject jsonobject = null;
+        List<SceneTableEntity> addSceneList =null;
+        try {
+            addSceneList = new ArrayList<>();
+            jsonobject = new JSONObject(sceneString);
+            JSONArray jsonarray = jsonobject.getJSONArray("scene");
+            for (int i = 0; i < jsonarray.length(); i++) {
+                SceneTableEntity sceneEntity = new SceneTableEntity();
+                JSONObject object = jsonarray.getJSONObject(i);
+                sceneEntity.scenename = object.optString("scenename");
+                sceneEntity.sceneposition = object.optString("sceneposition");
+                sceneEntity.location = object.optString("location");
+                sceneEntity.sceneid = object.optString("scene_id");
+
+                //判断数据库中是否已经存在此数据，若存在跳过插入
+                boolean ishave = false;
+                for (int j = 0; j < addSceneList.size(); j++) {
+                    if (addSceneList.get(j).sceneid.equals(object.optString("scene_id"))) {
+                        ishave = true;
+                    }
+                }
+                if (!ishave) {
+                    addSceneList.add(sceneEntity);
+                }
+                String s = addSceneList.toString();
+                Log.i("cxl", "loadScenefile:-----数据 "+s);
+            }
+
+            if(stateCallBack!=null){
+                stateCallBack.sceneData(addSceneList);
+            }
+        } catch (Exception e) {
+            // TODO: handle exception
+            e.printStackTrace();
+        }
     }
     private static  Runnable mRunnable =null;
     public static void WanDownLoad(final String ip, final StateCallBack stateCallBack) {
@@ -218,8 +258,12 @@ public class Utils {
                             Log.i("cxl",Thread.currentThread().getName()+"   DownLoadLAN     Name");
                             //保存文件
                             String deviceString = readContent(SDPATH+"pfk/"+Const.DEVICE);
+                            String sceneString = readContent(SDPATH+"pfk/"+Const.SCENEFILE);
                             //保存设备文件到数据库
                             loadDevicefile(deviceString,stateCallBack);
+                            loadScenefile(sceneString,stateCallBack);
+
+
                         }
                     };
                 }

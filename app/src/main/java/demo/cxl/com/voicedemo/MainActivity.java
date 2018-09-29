@@ -14,15 +14,20 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.accloud.service.ACDeviceMsg;
+
 import java.util.List;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import bean.DeviceTableEntity;
+import bean.SceneTableEntity;
 import demo.cxl.com.mylibrary.PFKAllControlCallBack;
 import demo.cxl.com.mylibrary.PFKControlCallBack;
 import demo.cxl.com.mylibrary.PFKMain;
 import demo.cxl.com.mylibrary.SocketInfo;
 import receiver.MyReceiver;
 import service.SubscribeService;
+import util.Const;
 import util.ControlCallBack;
 import util.StateCallBack;
 
@@ -38,6 +43,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private String KEY_BackGroundMusic = "playcontrol";
     private Context mContext;
     private MyReceiver mReceiver=null;
+    private List<SceneTableEntity> mSceneTableEntities;
+    private String mSceneid="";
+    private Thread mMyThread;
+    private Thread mMyThread2;
+    private ThreadPoolExecutor executor;
+    private ACDeviceMsg mDeviceMsg=null;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,7 +67,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Button bt_on = (Button) findViewById(R.id.bt_on);
         Button bt_all = (Button) findViewById(R.id.bt_all);
         Button bt_all2 = (Button) findViewById(R.id.bt_all2);
-        Button bt_time = (Button) findViewById(R.id.bt_time);
+        Button bt_scene_opeen = (Button) findViewById(R.id.bt_scene_opeen);
+        Button bt_scene_close = (Button) findViewById(R.id.bt_scene_close);
+        Button bt_stop = (Button) findViewById(R.id.bt_stop);
+        Button bt_quer = (Button) findViewById(R.id.bt_quer);
         mEt_number = (EditText) findViewById(R.id.et_number);
 
         bt_ok.setOnClickListener(this);
@@ -63,13 +78,43 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         bt_on.setOnClickListener(this);
         bt_all.setOnClickListener(this);
         bt_all2.setOnClickListener(this);
-
-        bt_time.setOnClickListener(new View.OnClickListener() {
+        bt_scene_opeen.setOnClickListener(this);
+        bt_scene_close.setOnClickListener(this);
+        bt_stop.setOnClickListener(this);
+        bt_quer.setOnClickListener(this);
+        Runnable runnable = new Runnable() {
             @Override
-            public void onClick(View v) {
-
+            public void run() {
+                while (connecting) {
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    controlSceneOpen();
+                    Log.i("thread", "open: " + "----------------------" + Thread.currentThread().getName());
+                }
             }
-        });
+        };
+
+        Runnable runnable2 = new Runnable() {
+            @Override
+            public void run() {
+                while (connecting) {
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    controlSceneClose();
+                    Log.i("thread", "close: " + "----------------------" + Thread.currentThread().getName());
+                }
+            }
+        };
+        mMyThread = new Thread(runnable);
+        mMyThread2 = new Thread(runnable2);
+        Log.i("caoxilin", " mMyThread2 初始化时候的线程  状态--------: "+mMyThread2.isInterrupted());
+        Log.i("caoxilin", "初始化线程的状态 mMyThread   : "+mMyThread.isInterrupted());
 
     }
     private long mEnd=0;
@@ -114,24 +159,7 @@ private boolean connecting =false;
                 break;
             case R.id.bt_on:
 
-                //开的控制指令
-                connecting = true;
-                new Thread(new Runnable() {
 
-                    @Override
-                    public void run() {
-                        while (connecting) {
-                            try {
-                                Thread.sleep(2000);
-                                    sendOpen();
-                                Log.i("cc", "open: "+"----------------------"+Thread.currentThread().getName());
-
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-                }).start();
 
                 sendOpen();
 
@@ -139,22 +167,6 @@ private boolean connecting =false;
                 break;
             case R.id.bt_close:
                 //关的控制指令
-                connecting = true;
-                new Thread(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        while (connecting) {
-                            try {
-                                Thread.sleep(2000);
-                                sendClose();
-                                Log.i("cc", "close: "+"----------------------"+Thread.currentThread().getName());
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-                }).start();
                 sendClose();
                 break;
             case R.id.bt_all:
@@ -180,7 +192,41 @@ private boolean connecting =false;
 
                 connecting=false;
                 break;
+            case R.id.bt_scene_opeen:
+                controlSceneOpen();
+//                timeOpen();
+                break;
+            case R.id.bt_scene_close:
+                controlSceneClose();
+//                timeClose();
+                break;
+            case R.id.bt_stop:
+                connecting =false;
+
+                mMyThread.interrupt();
+                mMyThread2.interrupt();
+
+                break;
+            case R.id.bt_quer:
+                Log.i("caoxilin", "查询  mMyThread2    close   --------: "+mMyThread2.isInterrupted());
+                Log.i("caoxilin", "查询   mMyThread    stop    open: "+mMyThread.isInterrupted());
+                break;
         }
+
+    }
+
+    private void timeClose() {
+        //开的控制指令
+        connecting = true;
+
+        mMyThread2.start();
+        Log.i("caoxilin", "timeClose: mMyThread2  "+mMyThread2.isInterrupted());
+    }
+
+    private void timeOpen() {
+        connecting = true;
+        mMyThread.start();
+        Log.i("caoxilin", "timeOpen: mMyThread"+mMyThread.isInterrupted());
 
     }
 
@@ -202,6 +248,40 @@ private boolean connecting =false;
         }
     }
 
+    private void controlSceneOpen() {
+        if(mSceneTableEntities==null){
+            return;
+        }
+        for (int i=0;i<mSceneTableEntities.size();i++){
+
+            if(mSceneTableEntities.get(i).scenename.equals("全开")){
+                mSceneid = mSceneTableEntities.get(i).sceneid;
+            }
+            if(mSceneTableEntities.get(i).scenename.equals("全关")){
+                mSceneid = mSceneTableEntities.get(i).sceneid;
+            }
+
+        }
+        //参数1 网关ID，参数2 Const.KEY_SCENE_ID， 参数3 场景列表中获取的ID，参数四 和五 可以给null
+        PFKAllControlCallBack.getInstance().allControl(mEt_number.getText().toString(), Const.KEY_SCENE_ID,mSceneid,Const.KEY_SCENE,"", null,MainActivity.this);
+
+    }
+    private void controlSceneClose(){
+        if(mSceneTableEntities==null){
+            return;
+        }
+        for (int i=0;i<mSceneTableEntities.size();i++){
+            //小达识别到的 场景名字，对比场景列表中的场景名字  去找相应的场景ID  控制场景 网关需要场景ID
+            if(mSceneTableEntities.get(i).scenename.equals("全关")){
+                mSceneid = mSceneTableEntities.get(i).sceneid;
+            }
+
+        }
+        //参数1 网关ID，参数2 Const.KEY_SCENE_ID， 参数3 场景列表中获取的ID，参数四 和五 可以给null
+        PFKAllControlCallBack.getInstance().allControl(mEt_number.getText().toString(), Const.KEY_SCENE_ID,mSceneid, Const.KEY_SCENE,"", null,MainActivity.this);
+
+    }
+
     private void connection() {
 
 
@@ -220,6 +300,13 @@ private boolean connecting =false;
             @Override
             public void onSuccess(String Success, String ip) {
                 Log.i(TAG, "onSuccess: "+Success);
+
+            }
+
+            @Override
+            public void sceneData(List<SceneTableEntity> sceneData) {
+                Log.i(TAG, "sceneData: "+sceneData.toString());
+                mSceneTableEntities = sceneData;
 
             }
 

@@ -10,6 +10,7 @@ import com.accloud.service.ACException;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import util.Const;
 import util.ControlCallBack;
 import util.YohoPoolExecutor;
 
@@ -42,12 +43,25 @@ public class PFKAllControlCallBack {
         if(mJsonobject3==null){
             mJsonobject3 = new JSONObject();
         }
+        if(Deviceid==null){
+            Deviceid ="null";
+        }
         try {
-            mJsonobject2.put(key, value);
-            mJsonobject.put("dev_id", Deviceid);
-            mJsonobject.put("dev_type", Devicetype);
-            mJsonobject.put("dev_attr", mJsonobject2);
-            mJsonobject3.put("switch", mJsonobject.toString());
+            if(Devicetype!=null){
+
+                if(Devicetype.equals(Const.KEY_SCENE)){
+                    mJsonobject2.put(key, value);
+                    mJsonobject3.put("switch", mJsonobject2.toString());
+                }else {
+
+                    mJsonobject2.put(key, value);
+                    mJsonobject.put("dev_id", Deviceid);
+                    mJsonobject.put("dev_type", Devicetype);
+                    mJsonobject.put("dev_attr", mJsonobject2);
+                    mJsonobject3.put("switch", mJsonobject.toString());
+                }
+            }
+
 
             if(mDeviceMsg==null){
                 mDeviceMsg = new ACDeviceMsg(68, mJsonobject3.toString().getBytes(),"open light");
@@ -60,12 +74,12 @@ public class PFKAllControlCallBack {
                 mRunnable = new Runnable() {
                     @Override
                     public void run() {
-                        Log.i("cxl",Thread.currentThread().getName()+"   控制的 run--------     Name");
+                        Log.i("cxl",Thread.currentThread().getName()+mJsonobject3.toString());
                         AC.bindMgr().sendToDeviceWithOption("840",number, mDeviceMsg, AC.LOCAL_FIRST, new PayloadCallback<ACDeviceMsg>() {
 
                             @Override
                             public void success(ACDeviceMsg deviceMsg) {
-                                Log.i("cxl",Thread.currentThread().getName()+"   success     Name");
+
                             }
 
                             @Override
@@ -90,7 +104,6 @@ public class PFKAllControlCallBack {
                                         }
                                         break;
                                 }
-                                Log.i("cxl",Thread.currentThread().getName()+"   error     Name");
                             }
                         });
                     }
