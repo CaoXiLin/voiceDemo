@@ -48,6 +48,9 @@ public interface Const {
     String KEY_SCENE="scene";
     String KEY_SCENE_ID="scene_id";
 
+    String KEY_DEV_ATTR ="dev_attr";
+    String KEY_COMMANDTYPE ="commandtype";
+
 
 
 

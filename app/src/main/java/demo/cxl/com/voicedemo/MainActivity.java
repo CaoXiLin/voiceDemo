@@ -231,21 +231,34 @@ private boolean connecting =false;
     }
 
     private void sendClose() {
+        String devicetype="";
+        String deviceid="";
         for (int i = 0;i<mDeviceTableEntities.size();i++){
             if(mDeviceTableEntities.get(i).getDevicetype().equals("CommonLight")){
-                PFKAllControlCallBack.getInstance().allControl(mEt_number.getText().toString(),"power","OFF",mDeviceTableEntities.get(i).getDevicetype()
-                        ,mDeviceTableEntities.get(i).getDeviceid(), socketinfo,MainActivity.this);
+                 devicetype = mDeviceTableEntities.get(i).getDevicetype();
+                 deviceid = mDeviceTableEntities.get(i).getDeviceid();
+
             }
         }
+
+        PFKAllControlCallBack.getInstance().allControl(mEt_number.getText().toString(),"power","OFF",devicetype
+                ,deviceid, socketinfo,MainActivity.this);
     }
 
     private void sendOpen() {
+        String devicetype="";
+        String deviceid="";
         for (int i = 0;i<mDeviceTableEntities.size();i++){
             if(mDeviceTableEntities.get(i).getDevicetype().equals("CommonLight")){
-                PFKAllControlCallBack.getInstance().allControl(mEt_number.getText().toString(),"power","ON",mDeviceTableEntities.get(i).getDevicetype()
-                        ,mDeviceTableEntities.get(i).getDeviceid(), socketinfo,MainActivity.this);
+                devicetype = mDeviceTableEntities.get(i).getDevicetype();
+                deviceid = mDeviceTableEntities.get(i).getDeviceid();
+
             }
         }
+
+        PFKAllControlCallBack.getInstance().allControl(mEt_number.getText().toString(),"power","ON",devicetype
+                ,deviceid, socketinfo,MainActivity.this);
+
     }
 
     private void controlSceneOpen() {

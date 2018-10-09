@@ -103,7 +103,7 @@ public class SubscribeService extends Service{
             }
             mIntent.setAction("pfk_data");
             sendBroadcast(mIntent);
-
+            Log.i("cao", "servicer 监听到的-------->:  "+jsonObjectGet.toString());
              JSONArray pfkFacilityArray = jsonObjectGet.optJSONArray("pfk_facility");//获取到的array;
             if (pfkFacilityArray == null || pfkFacilityArray.length() == 0) {
                 return;

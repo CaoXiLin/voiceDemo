@@ -37,9 +37,9 @@ public class PFKAllControlCallBack {
         if(mJsonobject==null){
             mJsonobject = new JSONObject();
         }
-        if(mJsonobject2==null){
-            mJsonobject2 = new JSONObject();
-        }
+        mJsonobject2 =null;
+        mJsonobject2 = new JSONObject();
+
         if(mJsonobject3==null){
             mJsonobject3 = new JSONObject();
         }
@@ -51,10 +51,12 @@ public class PFKAllControlCallBack {
 
                 if(Devicetype.equals(Const.KEY_SCENE)){
                     mJsonobject2.put(key, value);
+                    mJsonobject2.put("commandtype","xiaofei");
                     mJsonobject3.put("switch", mJsonobject2.toString());
                 }else {
 
                     mJsonobject2.put(key, value);
+                    mJsonobject2.put("commandtype","xiaofei");
                     mJsonobject.put("dev_id", Deviceid);
                     mJsonobject.put("dev_type", Devicetype);
                     mJsonobject.put("dev_attr", mJsonobject2);
@@ -74,7 +76,7 @@ public class PFKAllControlCallBack {
                 mRunnable = new Runnable() {
                     @Override
                     public void run() {
-                        Log.i("cxl",Thread.currentThread().getName()+mJsonobject3.toString());
+                        Log.i("cxl","线程 name>>"+Thread.currentThread().getName()+"，发送的json字段"+mJsonobject3.toString());
                         AC.bindMgr().sendToDeviceWithOption("840",number, mDeviceMsg, AC.LOCAL_FIRST, new PayloadCallback<ACDeviceMsg>() {
 
                             @Override
@@ -84,9 +86,7 @@ public class PFKAllControlCallBack {
 
                             @Override
                             public void error(ACException e) {
-                                if(controlCallBack!=null){
-                                    controlCallBack.onError("404");
-                                }
+
                                 switch (e.getErrorCode()){
                                     case 1992:
                                         if(controlCallBack!=null){
@@ -101,6 +101,16 @@ public class PFKAllControlCallBack {
                                     case 1998:
                                         if(controlCallBack!=null){
                                             controlCallBack.onError("网络错误");
+                                        }
+                                        break;
+                                    case 3807:
+                                        if(controlCallBack!=null){
+                                            controlCallBack.onError("设备不在线");
+                                        }
+                                        break;
+                                    default:
+                                        if(controlCallBack!=null){
+                                            controlCallBack.onError("执行失败");
                                         }
                                         break;
                                 }
